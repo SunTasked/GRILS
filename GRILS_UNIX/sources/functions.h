@@ -14,8 +14,20 @@
 // allows user to split sentence on spaces. (cf python.string.split())
 vector <string> split(string);
 
-// Copie de vertex en profondeur
+// Deep Copy of vertex object (i.e. allocated ressources within the vertex will be duplicated)
 Vertex * copyVertex(Vertex* p_vtx);
+
+// Releases the ressources allocated by the program to the Vertices in the given vector.
+// Should the allocation of ressources change, this function must be updated.
+void ReleaseAllocatedVertices (vector<Vertex *> & v_vertices);
+
+// Releases the ressources allocated by the program to the Turns in the given vector.
+// Should the allocation of ressources change, this function must be updated.
+void ReleaseAllocatedTurns (vector<Turn *> & v_Turns);
+
+// Releases the ressources allocated by the program to the TW (time windows) of the Vertices in the given vector.
+// Should the allocation of ressources change, this function must be updated.
+void ReleaseAllocatedTWs (vector<Vertex *> & v_vertices);
 
 // Computes the distance beetween 2 vertices
 float getDistance(Vertex * p_vtx_1, Vertex * p_vtx_2);
@@ -56,7 +68,7 @@ void insert_vtxIntoTurn(Insertion & ins, vector<Turn *> & v_Turns, vector<Vertex
 void updateBudgetSlack(vector<Turn *> v_Turns);
 
 // inits rand() seed.
-void initRandomness();
+void initRandSeed();
 
 // Returns a random number between lowerBound (included) and upperBound(excluded)
 int getRandomNumber(int lowerBound, int upperBound);

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdio.h>
 #include <sstream>
 #include <algorithm>
 #include <iterator>
@@ -29,9 +30,31 @@ Vertex * copyVertex(Vertex* p_vtx) {
 
 vector <string> split(string sentence) {
 	istringstream iss(sentence);
-	vector<string> words{ istream_iterator<string>{iss},
-		istream_iterator<string>{} };
+	vector<string> words (istream_iterator<string>{iss},istream_iterator<string>{} );
 	return words;
+}
+
+void ReleaseAllocatedVertices (vector<Vertex *> & v_vertices) {
+	for (auto it_vtx = v_vertices.begin(); it_vtx != v_vertices.end(); it_vtx++) {
+		delete (*it_vtx);
+	}
+}
+
+
+void ReleaseAllocatedTurns(vector<Turn *> & v_Turns) {
+	for (auto it_turn = v_Turns.begin(); it_turn != v_Turns.end(); it_turn++) {
+		delete (*it_turn);
+	}
+}
+
+
+void ReleaseAllocatedTWs (vector<Vertex *> & v_vertices) {
+	for (auto it_vtx = v_vertices.begin(); it_vtx != v_vertices.end(); it_vtx++) {
+		// Release time windows
+		for (auto it_tw = (*it_vtx)->v_tws.begin(); it_tw != (*it_vtx)->v_tws.end(); it_tw++) {
+			delete (*it_tw);
+		}
+	}
 }
 
 
@@ -273,7 +296,7 @@ void insert_vtxIntoTurn(Insertion & ins, vector<Turn *> & v_Turns, vector<Vertex
 }
 
 
-void initRandomness() {
+void initRandSeed() {
 	unsigned int seed = time(NULL);
 	srand(seed);
 }

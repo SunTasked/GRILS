@@ -3,7 +3,6 @@
 // ------------------------------------------------------------------------
 
 // TODO : Optimize !!!
-// - decrease "greedDecrease" value. --> 0.01
 
 
 
@@ -24,7 +23,7 @@ using namespace std;
 
 
 
-int main() { //------------------------------- START OF MAIN --------------------------------------
+int main(int argc, char *argv[]) { //------------------------------- START OF MAIN --------------------------------------
 
 	// ------------------------------------------------------------------------
 	// --------------------------- VARIABLES ----------------------------------
@@ -35,7 +34,7 @@ int main() { //------------------------------- START OF MAIN -------------------
 	float Tmax = 0; //------------------- Amount of time available for the Turns
 	int n_Turns = 0; //------------------ Number of Turns
 	int n_vertices = 0; //--------------- Number of vertices (others than 1st and last vertices)
-	float n_budgetLim = 0; //-------------- Maximal amount of ressource spendable
+	float n_budgetLim = 0; //------------ Maximal amount of ressource spendable
 	vector<Vertex *> v_vertices; //------ Vector of vertices (size == n_vertices + 2)
 	vector<Turn *> v_Turns; //----------- Vector of Turns (list of vertices)
 	vector<int> v_n_TypeConstraint; //--- Vector of the z-type Constaints , i.e., v_n_TypeConstraint[i] contains
@@ -57,26 +56,50 @@ int main() { //------------------------------- START OF MAIN -------------------
 	int n_Shake_Range = 1; //------------ Number of vertices to remove from each turn.
 
 
-
 	// ------------------------------------------------------------------------
 	// ------------------------------ START -----------------------------------
 	// ------------------------------------------------------------------------
 
 	cout << "---------- GRILS v1.0 ----------" << endl << endl;
 
+	// Acquiring file path.
 	string s_filePath;
 
-	if (TEST) {
-		s_filePath = "./test_files/MCTOPMTW-1-pr01.txt";
+	#ifdef TEST
+		s_filePath = "../MCTOPMTW\ test\ instances/MCTOPMTW-Cordeau//MCTOPMTW-1-pr01.txt";
 		cout << "----------- TESTING PROCEDURE ---------" << endl << endl;
-	}
-	else {
-		cout << "enter file path: ";
-		//s_filePath = "../../MCTOPMTW\ test\ instances/MCTOPMTW-Cordeau/MCTOPMTW-1-pr02.txt";
-		cin >> s_filePath;
-	}
+	#else
+		if (argc < 2){
+			cerr << "ERROR : you must at least specify the target file path" << endl
+				 << "  Use : [-t] /PATH_TO_EXE/grils PATH_TO_TEST_FILE" << endl
+				 << "		[-t] helps you track the algorithm progress";
+			return EXIT_WRONG_ARGS;
+		}
+		else {
+			for(int i = 1 ; i < argc; i++) {	
+				if(argv[i][0] == '-') { // parameters
+					if(argv[i][1] == 't' && strlen(argv[i]) == 2)
+					{   TRACE = true;
+					}
+					else
+					{   cerr << "ERROR : Unknown parameter : " << argv[i] << endl;
+						return EXIT_WRONG_ARGS;
+					}
+				}
+				else
+				{	if(s_filePath.size() == 0){
+						s_filePath = argv[i];
+					}
+					else
+					{	cerr << "ERROR : Multiple definition of test file path" << endl;
+	                    return EXIT_WRONG_ARGS;
+					}
+				}
+			}
+		}
+	#endif
 
-	if (TEST) {
+	#ifdef TEST
 		cout << "--- UNIT TESTS" << endl;
 		Test::FuncTest_global_GetDistance();
 		Test::FuncTest_global_copyVertex();
@@ -90,7 +113,7 @@ int main() { //------------------------------- START OF MAIN -------------------
 
 
 		cout << endl << "--- FONC TESTS" << endl;
-	}
+	#endif
 
 
 	// ------------------------------------------------------------------------
@@ -100,20 +123,26 @@ int main() { //------------------------------- START OF MAIN -------------------
 	ifstream myfile(s_filePath);
 	if (myfile.is_open())
 	{
-		parseFile(myfile, n_Turns, n_vertices, n_budgetLim, v_vertices, v_vertices_STW, v_Turns, v_n_TypeConstraint, T0, Tmax);
-		myfile.close();
+		try {
+			parseFile(myfile, n_Turns, n_vertices, n_budgetLim, v_vertices, v_vertices_STW, v_Turns, v_n_TypeConstraint, T0, Tmax);
+		}
+		catch (...) {
+			myfile.close();
+			cerr << "ERROR : An error occured while parsing the test file" << endl;
+			return EXIT_PARSING_ERROR;
+		}
+		
 	}
 	else {
-		cout << "Unable to open file" << endl;
-		system("pause");
-		return 0;
+		cerr << "ERROR : Unable to open file" << endl;
+		return EXIT_FILE_UNAVAILABLE;
 	}
 
 	// Test validity of file parsing
-	if (TEST) {
+	#ifdef TEST
 		Test::TestLoadingCore(n_Turns, n_vertices, n_budgetLim, &v_n_TypeConstraint);
 		Test::TestLoadingVertices(v_vertices);
-	}
+	#endif
 
 
 
@@ -123,20 +152,24 @@ int main() { //------------------------------- START OF MAIN -------------------
 
 
 	// Initialising RandomSeed.
-	initRandomness();
+	initRandSeed();
 
 	// Converting Multi-Time-Windows vertices to Single-Time-Windows Vertices.
 	// Initialising STW Vertices.
 	//
 	convertMTWtoSTW(v_vertices, v_vertices_STW);
 	initSTWVertices(v_vertices_STW, n_Turns);
-	if (TEST) { Test::TestConvertingMTWtoSTW(v_vertices_STW); }
+	#ifdef TEST
+		Test::TestConvertingMTWtoSTW(v_vertices_STW);
+	#endif
 
 	// Initialising Turns.
 	//
 	initTurns(n_budgetLim, n_Turns, v_vertices_STW[0], v_vertices_STW[1], v_n_TypeConstraint, v_Turns);
 	initBestSolution(v_BestSolution, n_Turns);
-	if (TEST) { Test::TestCreatingTours(v_Turns); }
+	#ifdef TEST 
+		Test::TestCreatingTours(v_Turns);
+	#endif
 
 
 	// ------------------------------------------------------------------------
@@ -196,33 +229,16 @@ int main() { //------------------------------- START OF MAIN -------------------
 
 
 	cout << endl << "End of the Computation" << endl;
-	// provoque un point d'arret ... je verrai plus tard.
 
+	ReleaseAllocatedTWs (v_vertices);
+	Test::assertValid("Releasing : TW (Time Windows) objects", true);
 
-	// Releasing MTW vertices
-	for (auto it_vtx = v_vertices.begin(); it_vtx != v_vertices.end(); it_vtx++) {
-		// Release time windows
-		for (auto it_tw = (*it_vtx)->v_tws.begin(); it_tw != (*it_vtx)->v_tws.end(); it_tw++) {
-			delete (*it_tw);
-		}
-		delete (*it_vtx);
-	}
+	ReleaseAllocatedVertices (v_vertices);
+	ReleaseAllocatedVertices (v_vertices_STW);
+	Test::assertValid("Releasing : Vertex objects", true);
 
-	Test::assertValid("Releasing : Vertex and TW objects", true);
-
-	// Releasing STW vertices:
-	for (auto it_vtx = v_vertices_STW.begin(); it_vtx != v_vertices_STW.end(); it_vtx++) {
-		delete (*it_vtx);
-	}
-
-	// Releasing turns:
-	for (auto it_turn = v_Turns.begin(); it_turn != v_Turns.end(); it_turn++) {
-		delete (*it_turn);
-	}
-	for (auto it_turn = v_BestSolution.begin(); it_turn != v_BestSolution.end(); it_turn++) {
-		delete (*it_turn);
-	}
-
+	ReleaseAllocatedTurns (v_Turns);
+	ReleaseAllocatedTurns (v_BestSolution);
 	Test::assertValid("Releasing : Turn objects", Turn::n_instance_count == 0);
 
 

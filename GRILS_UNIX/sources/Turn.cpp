@@ -34,7 +34,7 @@ Turn::Turn(int n_id, Vertex * vtx_v0, Vertex * vtx_vN) {
 
 Turn::~Turn()
 {
-	if (!TEST) {
+	#ifndef TEST
 		if (this->isBestTurn) {
 			for (auto it_vtx = this->v_vertices.begin(); it_vtx != this->v_vertices.end(); it_vtx++) {
 				delete (*it_vtx);
@@ -44,7 +44,7 @@ Turn::~Turn()
 			delete (this->v_vertices.front());
 			delete (this->v_vertices.back());
 		}
-	}
+	#endif
 	Turn::n_instance_count--;
 }
 

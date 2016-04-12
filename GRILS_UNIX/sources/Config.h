@@ -3,9 +3,16 @@
 
 // Change TEST value to 0 to deactivate testing procedures
 
-#define TEST false
+//#define TEST
 
-#define TRACE true
+static bool TRACE = false;
+
+
+// ERROR CODES
+
+#define EXIT_WRONG_ARGS 		001
+#define EXIT_FILE_UNAVAILABLE 	002
+#define EXIT_PARSING_ERROR 		003
 
 
 // speed of each visitor.
