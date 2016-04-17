@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) { //------------------------------- START OF MA
 
 	// greed loop parameters
 	float startgreed = 0.89; //---------- Initial Greed
-	float greedRange = 0.30; //------------- Greed Range
+	float greedRange = 0.30; //---------- Greed Range
 	float greedDecrease = 0.01; //------- Greed Decrease for each iter
 
 	// inner loop parameters
@@ -66,6 +66,7 @@ int main(int argc, char *argv[]) { //------------------------------- START OF MA
 	string s_filePath;
 
 	#ifdef TEST
+		// TESTING file MUST BE available
 		s_filePath = "../MCTOPMTW\ test\ instances/MCTOPMTW-Cordeau//MCTOPMTW-1-pr01.txt";
 		cout << "----------- TESTING PROCEDURE ---------" << endl << endl;
 	#else
@@ -215,11 +216,15 @@ int main(int argc, char *argv[]) { //------------------------------- START OF MA
 
 	} // ------------------------------------------------------------------------------------------- END OF GRILS
 
-	for (int i = 0; i < v_BestSolution.size(); i++) {
-		v_BestSolution[0]->PrintToFile(NULL);
+	if (TRACE) {
+		for (int i = 0; i < v_BestSolution.size(); i++) {
+			v_BestSolution[0]->Print();
+		}
 	}
 	Test::assertValid("Turn is Valid according to given constraints", v_BestSolution[0]->isTurnValid());
-	cout << "Score is " << v_BestSolution[0]->GetScore() << endl;
+	cout << endl 
+		 << " - RESULT : Score is " 
+		 << v_BestSolution[0]->GetScore() << endl;
 
 
 
@@ -247,7 +252,7 @@ int main(int argc, char *argv[]) { //------------------------------- START OF MA
 	// ------------------------------------------------------------------------
 
 	cout << endl << endl << "program successfully ended" << endl;
-	system("pause");
+
 
 	return 0;
 } //--------------------------- END OF MAIN --------------------------------

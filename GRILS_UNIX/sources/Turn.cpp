@@ -15,6 +15,8 @@ float Turn::f_BudgetLimitation;
 int Turn::n_instance_count = 0;
 
 
+// ----- CONSTRUCTOR AND DESTRUCTOR
+
 Turn::Turn() {
 	this->n_id = -1;
 	this->f_cost = 0;
@@ -23,17 +25,7 @@ Turn::Turn() {
 }
 
 
-Turn::Turn(int n_id, Vertex * vtx_v0, Vertex * vtx_vN) {
-	this->n_id = n_id;
-	this->v_vertices.push_back(copyVertex(vtx_v0)); // adding first vertex
-	this->v_vertices.push_back(copyVertex(vtx_vN)); // adding last vertex
-	this->isBestTurn = false;
-	Turn::n_instance_count++;
-}
-
-
-Turn::~Turn()
-{
+Turn::~Turn(){
 	#ifndef TEST
 		if (this->isBestTurn) {
 			for (auto it_vtx = this->v_vertices.begin(); it_vtx != this->v_vertices.end(); it_vtx++) {
@@ -49,26 +41,39 @@ Turn::~Turn()
 }
 
 
-//-------- GETTERS and SETTERS
-
-
-int Turn::GetIntervals() {
-	return this->v_vertices.size() - 1;
+Turn::Turn(int n_id, Vertex * vtx_v0, Vertex * vtx_vN) {
+	this->n_id = n_id;
+	this->v_vertices.push_back(copyVertex(vtx_v0)); // adding first vertex
+	this->v_vertices.push_back(copyVertex(vtx_vN)); // adding last vertex
+	this->isBestTurn = false;
+	Turn::n_instance_count++;
 }
 
+
+Turn::Turn(bool test) {
+	if (!test) {
+		cerr << "ERROR trying to use wrong Turn class constructor" << endl;
+	}
+	this->isBestTurn = false;
+	Turn::n_instance_count++;
+}
+
+
+
+//-------- GETTERS and SETTERS
 
 float Turn::GetAvailableTime() {
 	return f_availableTime;
 }
 
 
-float Turn::GetSlack(int i_knap) {
-	return this->v_n_Slack[i_knap];
+float Turn::GetCost() {
+	return this->f_cost;
 }
 
 
-float Turn::GetCost() {
-	return this->f_cost;
+int Turn::GetIntervals() {
+	return this->v_vertices.size() - 1;
 }
 
 
@@ -78,6 +83,11 @@ float Turn::GetScore() {
 		f_score += (*it_vtx)->score;
 	}
 	return f_score;
+}
+
+
+float Turn::GetSlack(int i_knap) {
+	return this->v_n_Slack[i_knap];
 }
 
 
@@ -109,7 +119,37 @@ void Turn::Update() {
 
 	// UPDATING overall cost
 	this->UpdateCost();
+}
 
+
+void Turn::UpdateAvailableTime() {
+	this->f_availableTime = 0;
+	for (auto it_vtx = this->v_vertices.begin(); it_vtx != this->v_vertices.end(); it_vtx++) {
+		this->f_availableTime += (*it_vtx)->Wait;
+	}
+	this->f_availableTime += this->v_vertices.back()->MaxShift;
+}
+
+
+void Turn::UpdateCost() {
+	this->f_cost = 0;
+	for (auto it_vtx = this->v_vertices.begin() + 1; it_vtx != this->v_vertices.end(); it_vtx++) {
+		this->f_cost += (*it_vtx)->fee;
+	}
+}
+
+
+void Turn::UpdateKnapSlack() {
+	//reset n_types slacks.
+	for (int i = 0; i < 10; i++) {
+		this->v_n_Slack[i] = this->v_n_TypeConstraint[i];
+	}
+
+	for (auto it_vtx = this->v_vertices.begin(); it_vtx != this->v_vertices.end(); it_vtx++) {
+		for (int i = 0; i < 10; i++) {
+			this->v_n_Slack[i] -= (*it_vtx)->v_constraint[i];
+		}
+	}
 }
 
 
@@ -146,36 +186,6 @@ void Turn::UpdateVerticesTimeRelatedInfos() {
 	}
 }
 
-
-void Turn::UpdateAvailableTime() {
-	this->f_availableTime = 0;
-	for (auto it_vtx = this->v_vertices.begin(); it_vtx != this->v_vertices.end(); it_vtx++) {
-		this->f_availableTime += (*it_vtx)->Wait;
-	}
-	this->f_availableTime += this->v_vertices.back()->MaxShift;
-}
-
-
-void Turn::UpdateKnapSlack() {
-	//reset n_types slacks.
-	for (int i = 0; i < 10; i++) {
-		this->v_n_Slack[i] = this->v_n_TypeConstraint[i];
-	}
-
-	for (auto it_vtx = this->v_vertices.begin(); it_vtx != this->v_vertices.end(); it_vtx++) {
-		for (int i = 0; i < 10; i++) {
-			this->v_n_Slack[i] -= (*it_vtx)->v_constraint[i];
-		}
-	}
-}
-
-
-void Turn::UpdateCost() {
-	this->f_cost = 0;
-	for (auto it_vtx = this->v_vertices.begin() + 1; it_vtx != this->v_vertices.end(); it_vtx++) {
-		this->f_cost += (*it_vtx)->fee;
-	}
-}
 
 
 //--------- VALIDATION
@@ -220,7 +230,6 @@ bool Turn::isTurnValid(bool checkTime , bool checkConstraints) {
 	}
 	
 	return b_testResult;
-	
 }
 
 
@@ -233,15 +242,20 @@ void Turn::_testPurpose_InsertVertex(Vertex * p_vtx, int index) {
 }
 
 
-Turn::Turn(bool test) {
-	if (!test) {
-		cerr << "ERROR trying to use wrong Turn class constructor" << endl;
+//--------- TIME AND CONSTRAINTS
+
+int Turn::GetBestShift(Vertex * p_vtx, float & bestShift) {
+	int index = -1;
+	for (int i = 0; i < this->v_vertices.size() - 1; i++) {
+		float shift_i = this->GetShift(p_vtx, i);
+		if (shift_i > 0 && bestShift > shift_i) {
+			index = i;
+			bestShift = shift_i;
+		}
 	}
-	this->isBestTurn = false;
-	Turn::n_instance_count++;
+	return index;
 }
 
-//--------- TIME AND CONSTRAINTS
 
 float Turn::GetShift(Vertex * p_vtx, int index) {
 
@@ -276,36 +290,6 @@ float Turn::GetShift(Vertex * p_vtx, int index) {
 		}
 	}
 	return f_shift_j;
-}
-
-
-int Turn::GetBestShift(Vertex * p_vtx, float & bestShift) {
-	int index = -1;
-	for (int i = 0; i < this->v_vertices.size() - 1; i++) {
-		float shift_i = this->GetShift(p_vtx, i);
-		if (shift_i > 0 && bestShift > shift_i) {
-			index = i;
-			bestShift = shift_i;
-		}
-	}
-	return index;
-}
-
-
-bool Turn::IsInsertable(Vertex * p_vtx) {
-	bool result = true;
-
-	if (p_vtx->e != (this->n_id % 2)) {
-		return false;
-	}
-
-
-	for (int i = 0; i < 10; i++) {
-		result = result && (int(p_vtx->v_constraint[i]) <= this->v_n_Slack[i]);
-	}
-	result = result && (Turn::f_BudgetSlack >= p_vtx->fee);
-
-	return result;
 }
 
 
@@ -354,44 +338,27 @@ void Turn::InsertVertex(Vertex * p_vtx, int index) {
 		p_vtx_i->MaxShift = fmin(p_vtx_i->v_tws[0]->C - p_vtx_i->Departure,
 			p_vtx_next->Wait + p_vtx_next->MaxShift);
 	}
+}
 
+
+bool Turn::IsInsertable(Vertex * p_vtx) {
+	bool result = true;
+
+	if (p_vtx->e != (this->n_id % 2)) {
+		return false;
+	}
+
+
+	for (int i = 0; i < 10; i++) {
+		result = result && (int(p_vtx->v_constraint[i]) <= this->v_n_Slack[i]);
+	}
+	result = result && (Turn::f_BudgetSlack >= p_vtx->fee);
+
+	return result;
 }
 
 
 // UTILITIES
-
-vector<Vertex *> Turn::RemoveVertices(int n_start, int n_range) {
-	vector<int> v_VtxToRemove;
-	vector<Vertex *> v_p_RemovedVtx;
-	int n_removed = 0;
-	n_range = min(n_range, int(this->v_vertices.size() - 2));
-
-	for (int i = 0; i < n_range; i++) {
-		v_VtxToRemove.push_back(1 + (n_start - 1 + i) % (this->v_vertices.size() - 2));
-	}
-	sort(v_VtxToRemove.rbegin(), v_VtxToRemove.rend());
-	
-	for (int i = 0; i < v_VtxToRemove.size(); i++) {
-		v_vertices[v_VtxToRemove[i]]->v_c_ICN[this->n_id] = 'C';
-		v_p_RemovedVtx.push_back(v_vertices[v_VtxToRemove[i]]);
-		this->v_vertices.erase(this->v_vertices.begin() + v_VtxToRemove[i] );
-	}
-
-	return v_p_RemovedVtx;
-}
-
-
-void Turn::PrintToFile(ifstream * file) {
-
-	cout << endl << "Composition of turn " << this->n_id << endl;
-	for (auto it = this->v_vertices.begin(); it != v_vertices.end(); it++) {
-		cout << (*it)->id << " : TA  = " << (*it)->TA << "  Wait = " << (*it)->Wait << "  Departure = " << (*it)->Departure << "  MaxShift = " << (*it)->MaxShift << "  O,C = " << (*it)->v_tws[0]->O << " " << (*it)->v_tws[0]->C << endl;
-	}
-	cout << endl;
-
-	// Implement use of file
-}
-
 
 void Turn::Copy(Turn * p_turn) {
 	
@@ -413,3 +380,34 @@ void Turn::Copy(Turn * p_turn) {
 	// updates other parameters
 	this->Update();
 }
+
+
+void Turn::Print() {
+	cout << endl << "Composition of turn " << this->n_id << endl;
+	for (auto it = this->v_vertices.begin(); it != v_vertices.end(); it++) {
+		cout << (*it)->id << " : TA  = " << (*it)->TA << "  Wait = " << (*it)->Wait << "  Departure = " << (*it)->Departure << "  MaxShift = " << (*it)->MaxShift << "  O,C = " << (*it)->v_tws[0]->O << " " << (*it)->v_tws[0]->C << endl;
+	}
+	cout << endl;
+}
+
+
+vector<Vertex *> Turn::RemoveVertices(int n_start, int n_range) {
+	vector<int> v_VtxToRemove;
+	vector<Vertex *> v_p_RemovedVtx;
+	int n_removed = 0;
+	n_range = min(n_range, int(this->v_vertices.size() - 2));
+
+	for (int i = 0; i < n_range; i++) {
+		v_VtxToRemove.push_back(1 + (n_start - 1 + i) % (this->v_vertices.size() - 2));
+	}
+	sort(v_VtxToRemove.rbegin(), v_VtxToRemove.rend());
+	
+	for (int i = 0; i < v_VtxToRemove.size(); i++) {
+		v_vertices[v_VtxToRemove[i]]->v_c_ICN[this->n_id] = 'C';
+		v_p_RemovedVtx.push_back(v_vertices[v_VtxToRemove[i]]);
+		this->v_vertices.erase(this->v_vertices.begin() + v_VtxToRemove[i] );
+	}
+
+	return v_p_RemovedVtx;
+}
+

@@ -18,8 +18,9 @@ file(
 
 add_executable(
 
-        main
+        grils
 
         ${source_files}
 
 )
+

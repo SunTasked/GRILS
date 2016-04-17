@@ -6,84 +6,158 @@
 
 
 // FUNCTIONS
+//
+// Declaration of global usage functions.
+//
 
 
-// --------------- UTILITIES
+// --------------- UTILITY ---------------
+//
 // functions created as programming tools.
+//
 
-// allows user to split sentence on spaces. (cf python.string.split())
-vector <string> split(string);
-
-// Deep Copy of vertex object (i.e. allocated ressources within the vertex will be duplicated)
 Vertex * copyVertex(Vertex* p_vtx);
+// Instructions :
+//		Does a deep copy of vertex object (i.e. a new Vertex object will be instanciated)
+//
+// Return Value :
+//		The new Vertex instance.
 
-// Releases the ressources allocated by the program to the Vertices in the given vector.
-// Should the allocation of ressources change, this function must be updated.
-void ReleaseAllocatedVertices (vector<Vertex *> & v_vertices);
-
-// Releases the ressources allocated by the program to the Turns in the given vector.
-// Should the allocation of ressources change, this function must be updated.
-void ReleaseAllocatedTurns (vector<Turn *> & v_Turns);
-
-// Releases the ressources allocated by the program to the TW (time windows) of the Vertices in the given vector.
-// Should the allocation of ressources change, this function must be updated.
-void ReleaseAllocatedTWs (vector<Vertex *> & v_vertices);
-
-// Computes the distance beetween 2 vertices
-float getDistance(Vertex * p_vtx_1, Vertex * p_vtx_2);
-
-// Counts how many remaining vertices are still insertible 
 int countInsertible(vector<Vertex *> & v_vertices_STW, int n_turns);
+// Instructions :
+// 		Counts how many remaining vertices are still insertible
+//
+// DEPRECATED
 
-// Computes score of a solution.
-float getSolutionScore(vector<Turn *> v_Turns);
+float getDistance(Vertex * p_vtx_1, Vertex * p_vtx_2);
+// Instructions :
+//		Computes the Euclidian distance beetween 2 vertices
+//
+// Return value :
+// 		The value of the distance.
 
-// Comparison function for Insertion type
-bool sortInsertion(Insertion i, Insertion j);
-
-
-
-// --------------- READABILITY
-// functions created in order to improve lisibility over the program.
-
-// Parses Files
-void parseFile(istream & myfile, int & n_Turns, int & n_vertices, float & n_budgetLim, vector<Vertex *> & v_vertices, vector<Vertex *> & v_vertices_STW, vector<Turn *> & v_Turns, vector<int> & v_n_TypeConstraint, float & T0, float & Tmax);
-
-// Converts MTW vertices to STW vertices
-void convertMTWtoSTW(vector<Vertex *> & v_vertices, vector<Vertex *> & v_vertices_STW);
-
-// Init vertices
-void initSTWVertices(vector<Vertex *> & v_vertices_STW, int n_Turns);
-
-// Init Turns
-void initTurns(float n_budgetLim, float  n_Turns, Vertex * start, Vertex * finish, vector<int> & v_n_TypeConstraint, vector<Turn *> & v_Turns);
-
-// Init BestSolution
-void initBestSolution(vector<Turn *> & v_BestSolution, int n_Turns);
-
-// inserts a vertex in a turn given the informations provided in Insertion
-void insert_vtxIntoTurn(Insertion & ins, vector<Turn *> & v_Turns, vector<Vertex *> & v_vertices_STW);
-
-// updates slack related to budget among the turns.
-void updateBudgetSlack(vector<Turn *> v_Turns);
-
-// inits rand() seed.
-void initRandSeed();
-
-// Returns a random number between lowerBound (included) and upperBound(excluded)
 int getRandomNumber(int lowerBound, int upperBound);
+// Instructions :
+// 		Picks a random number between lowerBound (included) and upperBound(excluded)
+//
+// Return value :
+// 		integer respecting the constraints
 
-// Build Turns.
+float getSolutionScore(vector<Turn *> v_Turns);
+// Instructions :
+//		Computes score of a solution.
+//
+// Return value :
+// 		The score of the given solution.
+
+void insert_vtxIntoTurn(Insertion & ins, vector<Turn *> & v_Turns, vector<Vertex *> & v_vertices_STW);
+// Instructions :
+// 		inserts a vertex in a turn given the informations provided in Insertion
+
+bool sortInsertion(Insertion i, Insertion j);
+// Instructions :
+// 		Compares two Insertion objects
+//
+// Return value :
+// 		true if i.heuristicScore > j.heuristicScore
+//		false otherwise
+
+vector <string> split(string);
+// Instructions :
+//		allows user to split sentence on spaces. (cf python.string.split())
+//
+// Return value :
+//		Vector of strings. each string contains a word.
+
+
+
+// --------------- READABILITY ---------------
+//
+// functions created in order to improve code lisibility.
+// Most of them are just representing a step of the GRILS algorithm.
+//
+
 void buildTurns(vector<Vertex *> & v_vertices_STW, vector<Turn *> & v_Turns, float & greed);
+// Instructions :
+// 		Build Turns according to the ILS algorithm modified by the random approach.
 
-// Shakes solution (removes some vertices from turns)
-// returns vector of vertices removed from turns.
+void convertMTWtoSTW(vector<Vertex *> & v_vertices, vector<Vertex *> & v_vertices_STW);
+// Instructions :
+// 		Converts MTW vertices into STW vertices
+
+void initSTWVertices(vector<Vertex *> & v_vertices_STW, int n_Turns);
+// Instructions :
+// 		Inits the STW vertices vector.
+
+void initTurns(float n_budgetLim, float  n_Turns, Vertex * start, Vertex * finish, vector<int> & v_n_TypeConstraint, vector<Turn *> & v_Turns);
+// Instructions :
+// 		Inits the turns vector.
+
+void initBestSolution(vector<Turn *> & v_BestSolution, int n_Turns);
+// Instructions :
+// 		Inits the BestSolution vector.
+
+void initRandSeed();
+// Instructions :
+// 		inits rand() seed.
+
+void parseFile(istream & myfile, int & n_Turns, int & n_vertices, float & n_budgetLim, vector<Vertex *> & v_vertices, vector<Vertex *> & v_vertices_STW, vector<Turn *> & v_Turns, vector<int> & v_n_TypeConstraint, float & T0, float & Tmax);
+// Instructions :
+// 		Parses input file "myfile"
+// 		Values affected are : 
+// 			- n_turns (number of turns)
+//			- n_vertices (number of vertices)
+//			- n_budgetLim (maximal amount of money allocated to the turns)
+//			- v_vertices (vector of vertices with multiple time windows)
+//			- v_vertices_STW (vector of vertices with single time windows)
+//			- v_Turns (vector of turns initialised)
+//			- v_n_TypeConstraint (vector of n-type-constraint)
+//			- T0 (time at which TOP starts)
+//			- Tmax (time at wich TOP ends)
+//
+// NB: Might throw exception if file is not encoded correctly
+
+void updateBudgetSlack(vector<Turn *> v_Turns);
+// Instructions :
+// 		updates slack related to budget among the turns.
+
+void ReleaseAllocatedTurns (vector<Turn *> & v_Turns);
+// Instructions :
+// 		Releases the ressources allocated by the program to the Turns in the given vector.
+//
+// NB :
+// 		Should the allocation of ressources change, this function must be updated.
+
+void ReleaseAllocatedTWs (vector<Vertex *> & v_vertices);
+// Instructions :
+// 		Releases the ressources allocated by the program to the TW (time windows) of the Vertices in the given vector.
+//
+// NB :
+// 		Should the allocation of ressources change, this function must be updated.
+
+void ReleaseAllocatedVertices (vector<Vertex *> & v_vertices);
+// Instructions :
+// 		Releases the ressources allocated by the program to the Vertices in the given vector.
+//
+// NB :
+// 		Should the allocation of ressources change, this function must be updated.
+
 vector<Vertex *> shakeSolution(vector<Turn *> & v_Turns, int n_Shake_StartIndex, int n_Shake_Range);
+// Instructions :
+// 		Shakes solution (removes some vertices from turns)
+//
+// Return value :
+// 		vector of vertices removed from turns.
 
-// Updates Vectors neighborhood consistency.
-void updateVerticesCompatibility(vector<Vertex *> v_vertices_STW, vector<Vertex *> v_p_removedVertices, vector<Turn *>v_Turns);
-
-// Updates Shake parameters: StartIndex and Range.
 void updateShake(int & n_Shake_StartIndex, int & n_Shake_Range, vector<Turn *> & v_Turns, int n_vertices);
+// Instructions :
+// 		Updates Shake parameters: StartIndex and Range.
+
+void updateVerticesCompatibility(vector<Vertex *> v_vertices_STW, vector<Vertex *> v_p_removedVertices, vector<Turn *>v_Turns);
+// Instructions :
+// 		Updates Vectors neighborhood consistency.
+
+
 
 #endif // FUNCTIONS_H
+
