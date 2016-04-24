@@ -59,6 +59,10 @@ public:
 
 	// Asserting if result value is True. Does not block execution
 	void static assertValid(string s_expected, bool b_testResult);
+
+
+	// Building a tour from built vertices
+	void static BuildTurn(vector <Vertex *> v_vertices,vector <Turn *> v_Turns, vector<int> v_InsertionSequence);
 };
 
 #endif // TEST_H

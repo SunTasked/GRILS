@@ -5,9 +5,6 @@
 
 //#define TEST
 
-static bool TRACE = false;
-
-
 // ERROR CODES
 
 #define EXIT_WRONG_ARGS 		001

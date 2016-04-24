@@ -412,9 +412,9 @@ void Test::FuncTest_Turn_UpdateVerticesTimeRelatedInfos() {
 	b_testResults = b_testResults && int(vtx_4.Departure) == 34;
 	b_testResults = b_testResults && int(p_vtx_0->Departure) == 39;
 
-	b_testResults = b_testResults && int(vtx_1.MaxShift) == 2;
-	b_testResults = b_testResults && int(vtx_2.MaxShift) == 2;
-	b_testResults = b_testResults && int(vtx_3.MaxShift) == 1;
+	b_testResults = b_testResults && int(vtx_1.MaxShift) == 4;
+	b_testResults = b_testResults && int(vtx_2.MaxShift) == 4;
+	b_testResults = b_testResults && int(vtx_3.MaxShift) == 8;
 	b_testResults = b_testResults && int(vtx_4.MaxShift) == 6;
 	b_testResults = b_testResults && int(p_vtx_0->MaxShift) == 6;
 
@@ -557,6 +557,8 @@ void Test::FuncTest_Turn_RemoveVertices() {
 	Test::assertValid("Turn - RemoveVertices(int,int)", b_testResults);
 
 }
+
+
 // Asserts
 
 void Test::assertValid(string s_expected, bool b_testResult) {
@@ -564,3 +566,40 @@ void Test::assertValid(string s_expected, bool b_testResult) {
 	string s_result = (b_testResult) ? s_ok + s_expected : s_fail + s_expected;
 	cout << s_result << endl;
 }
+
+
+
+// Building a tour from built vertices
+
+void Test::BuildTurn(vector <Vertex *> v_vertices_STW, vector <Turn *> v_turns, vector<int> v_InsertionSequence){
+	Turn turn (0, v_vertices_STW[0], v_vertices_STW[1]);
+
+	for (int i = 0; i < v_InsertionSequence.size() ; i++){
+
+		cout << endl << "it " << i << endl;
+		cout << turn.GetShift(v_vertices_STW[v_InsertionSequence[i]], i)<< endl;
+		turn.InsertVertex(v_vertices_STW[v_InsertionSequence[i]],i);
+		turn.Print();
+		turn.UpdateVerticesTimeRelatedInfos();
+		turn.Print();
+		// UPDATING KNAPSACK CONSTRAINTS
+		//updateBudgetSlack(v_turns);
+		//turn.UpdateKnapSlack();
+	}
+
+
+	turn.UpdateVerticesTimeRelatedInfos();
+
+
+
+	Test::assertValid("Solution is Valid according to given constraints", turn.isTurnValid());
+
+
+
+	cout <<endl << "shift of insertion of vertex 82 into turn : " << turn.GetShift(v_vertices_STW[82],6) << endl;
+}
+
+
+
+
+

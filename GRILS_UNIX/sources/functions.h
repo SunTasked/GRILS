@@ -54,6 +54,13 @@ void insert_vtxIntoTurn(Insertion & ins, vector<Turn *> & v_Turns, vector<Vertex
 // Instructions :
 // 		inserts a vertex in a turn given the informations provided in Insertion
 
+void PrintHowTo();
+// Instructions :
+//		Prints the user's manual of the application.
+//
+// NB :
+//		Should you add or modify app functionnalities, please update this method
+
 bool sortInsertion(Insertion i, Insertion j);
 // Instructions :
 // 		Compares two Insertion objects
@@ -68,7 +75,6 @@ vector <string> split(string);
 //
 // Return value :
 //		Vector of strings. each string contains a word.
-
 
 
 // --------------- READABILITY ---------------

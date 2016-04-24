@@ -2,9 +2,6 @@
 // ----------------------------- GRILS ------------------------------------
 // ------------------------------------------------------------------------
 
-// TODO : Optimize !!!
-
-
 
 #include <ctime>   // for time
 #include <fstream>
@@ -21,6 +18,8 @@
 using namespace std;
 
 
+bool TRACE_INSERT = false;
+bool TRACE_TOUR = false;
 
 
 int main(int argc, char *argv[]) { //------------------------------- START OF MAIN --------------------------------------
@@ -60,8 +59,6 @@ int main(int argc, char *argv[]) { //------------------------------- START OF MA
 	// ------------------------------ START -----------------------------------
 	// ------------------------------------------------------------------------
 
-	cout << "---------- GRILS v1.0 ----------" << endl << endl;
-
 	// Acquiring file path.
 	string s_filePath;
 
@@ -71,19 +68,21 @@ int main(int argc, char *argv[]) { //------------------------------- START OF MA
 		cout << "----------- TESTING PROCEDURE ---------" << endl << endl;
 	#else
 		if (argc < 2){
-			cerr << "ERROR : you must at least specify the target file path" << endl
-				 << "  Use : [-t] /PATH_TO_EXE/grils PATH_TO_TEST_FILE" << endl
-				 << "		[-t] helps you track the algorithm progress";
+			PrintHowTo();
 			return EXIT_WRONG_ARGS;
 		}
 		else {
 			for(int i = 1 ; i < argc; i++) {	
-				if(argv[i][0] == '-') { // parameters
-					if(argv[i][1] == 't' && strlen(argv[i]) == 2)
-					{   TRACE = true;
+				if(argv[i][0] == '-' && strlen(argv[i]) >= 2) { // parameters
+					if(argv[i][1] == 't' )
+					{   TRACE_TOUR = true;
+					}
+					else if(argv[i][1] == 'i' )
+					{   TRACE_INSERT = true;
 					}
 					else
 					{   cerr << "ERROR : Unknown parameter : " << argv[i] << endl;
+						PrintHowTo();
 						return EXIT_WRONG_ARGS;
 					}
 				}
@@ -93,10 +92,17 @@ int main(int argc, char *argv[]) { //------------------------------- START OF MA
 					}
 					else
 					{	cerr << "ERROR : Multiple definition of test file path" << endl;
+						PrintHowTo();
 	                    return EXIT_WRONG_ARGS;
 					}
 				}
 			}
+		}
+
+		if (s_filePath.size() == 0) {
+			cerr << "ERROR : Path to test file is not defined." << endl;
+			PrintHowTo();
+            return EXIT_WRONG_ARGS;
 		}
 	#endif
 
@@ -111,7 +117,6 @@ int main(int argc, char *argv[]) { //------------------------------- START OF MA
 		Test::FuncTest_Turn_UpdateCost();
 		Test::FuncTest_Turn_UpdateKnapSlack();
 		Test::FuncTest_Turn_RemoveVertices();
-
 
 		cout << endl << "--- FONC TESTS" << endl;
 	#endif
@@ -173,60 +178,76 @@ int main(int argc, char *argv[]) { //------------------------------- START OF MA
 	#endif
 
 
+	// Testing turn construction
+	#ifdef TEST
+
+	vector <int> v_InsertionSequence = {189, 184, 137, 126, 34};
+	Test::BuildTurn(v_vertices_STW, v_Turns, v_InsertionSequence);
+
 	// ------------------------------------------------------------------------
 	// ------------- GREEDY ALGORITHM with ITERATIVE LOCAL SEARCH -------------
 	// ------------------------------------------------------------------------
 
 
-	
-	for (float greed = startgreed; greed > startgreed - greedRange; greed -= greedDecrease) { //---- START OF GRILS
-		int n_iterationNoImprovement = 0;
+	#else
 
-		while (n_iterationNoImprovement < n_maxIterNoImprovement) { //------------------------------ START OF ILS
+		for (float greed = startgreed; greed > startgreed - greedRange; greed -= greedDecrease) { //---- START OF GRILS
+			int n_iterationNoImprovement = 0;
 
-			// BUILDING SOLUTION
-			buildTurns(v_vertices_STW, v_Turns, greed);
+			while (n_iterationNoImprovement < n_maxIterNoImprovement) { //------------------------------ START OF ILS
 
-			// COMPARING LAST SOLUTION TO BEST SOLUTION
-			float f_score_CurrentSolution = getSolutionScore(v_Turns);
-			if (f_score_CurrentSolution > f_score_BestSolution) {
-				if (TRACE) {
-					cout << endl << "Better Solution Found" << endl;
+				// BUILDING SOLUTION
+				buildTurns(v_vertices_STW, v_Turns, greed);
+
+				// CHECKING SOLUTION VALIDITY
+				if (TRACE_INSERT){
+					Test::assertValid("Solution is Valid according to given constraints", v_Turns[0]->isTurnValid(true, false));
 				}
-				n_iterationNoImprovement = 0;
-				f_score_BestSolution = f_score_CurrentSolution;
-				for (int i = 0; i < v_Turns.size(); i++) {
-					v_BestSolution[i]->Copy(v_Turns[i]);
+
+				// COMPARING LAST SOLUTION TO BEST SOLUTION
+				float f_score_CurrentSolution = getSolutionScore(v_Turns);
+				if (f_score_CurrentSolution > f_score_BestSolution) {
+					if (TRACE_TOUR) {
+						cout << endl << "Better Solution Found" << endl;
+					}
+					n_iterationNoImprovement = 0;
+					f_score_BestSolution = f_score_CurrentSolution;
+					for (int i = 0; i < v_Turns.size(); i++) {
+						v_BestSolution[i]->Copy(v_Turns[i]);
+					}
 				}
+				else {
+					n_iterationNoImprovement++;
+				}
+
+				// SHAKING SOLUTION
+				vector<Vertex *> v_p_removedVertices = shakeSolution(v_Turns, n_Shake_StartIndex, n_Shake_Range);
+
+				if (TRACE_INSERT){
+					Test::assertValid("Solution is Valid according to given constraints", v_Turns[0]->isTurnValid());
+				}
+
+				// UPDATING NEIGHBORHOOD CONSISTENCY
+				updateVerticesCompatibility(v_vertices_STW, v_p_removedVertices, v_Turns);
+
+				// UPDATING SHAKE START AND RANGE
+				updateShake(n_Shake_StartIndex, n_Shake_Range, v_Turns, n_vertices);
+
+			} // --------------------------------------------------------------------------------------- END OF ILS
+
+		} // ------------------------------------------------------------------------------------------- END OF GRILS
+
+		if (TRACE_TOUR) {
+			for (int i = 0; i < v_BestSolution.size(); i++) {
+				v_BestSolution[i]->Print();
+				Test::assertValid("Turn is Valid according to given constraints", v_BestSolution[i]->isTurnValid());
 			}
-			else {
-				n_iterationNoImprovement++;
-			}
-
-			// SHAKING SOLUTION
-			vector<Vertex *> v_p_removedVertices = shakeSolution(v_Turns, n_Shake_StartIndex, n_Shake_Range);
-
-			// UPDATING NEIGHBORHOOD CONSISTENCY
-			updateVerticesCompatibility(v_vertices_STW, v_p_removedVertices, v_Turns);
-
-			// UPDATING SHAKE START AND RANGE
-			updateShake(n_Shake_StartIndex, n_Shake_Range, v_Turns, n_vertices);
-
-		} // --------------------------------------------------------------------------------------- END OF ILS
-
-	} // ------------------------------------------------------------------------------------------- END OF GRILS
-
-	if (TRACE) {
-		for (int i = 0; i < v_BestSolution.size(); i++) {
-			v_BestSolution[0]->Print();
 		}
-	}
-	Test::assertValid("Turn is Valid according to given constraints", v_BestSolution[0]->isTurnValid());
-	cout << endl 
-		 << " - RESULT : Score is " 
-		 << v_BestSolution[0]->GetScore() << endl;
+		cout << endl 
+			 << " - RESULT : Score is "
+			 << getSolutionScore(v_BestSolution) << endl;
 
-
+	#endif
 
 	// ------------------------------------------------------------------------
 	// ------------------------- RELEASE OF RESSOURCES ------------------------

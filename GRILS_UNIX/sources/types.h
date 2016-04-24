@@ -25,7 +25,8 @@ struct Vertex { // Vertex
 
 	// Should you change anything here don't forget to implement accordingly copyVertex(p_vtx) described in function.h
 
-	int id; //------------ unique id
+	int id; //------------ unique id among MTW Vertices
+	int id_STW; //-------- unique id among STW Vertices
 	float x; //----------- x coordinate
 	float y; //----------- y coordinate
 	float score; //------- score associated with the vertex

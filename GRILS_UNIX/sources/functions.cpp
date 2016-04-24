@@ -13,6 +13,9 @@
 
 using namespace std;
 
+extern bool TRACE_TURN;
+extern bool TRACE_INSERT;
+
 
 // --------------- UTILITY ---------------
 //
@@ -70,12 +73,11 @@ float getSolutionScore(vector<Turn *> v_Turns) {
 void insert_vtxIntoTurn(Insertion & ins, vector<Turn *> & v_Turns, vector<Vertex *> & v_vertices_STW) {
 
 	// INSERTION
-	v_Turns[ins.n_turn]->InsertVertex(ins.p_vtx);
+	v_Turns[ins.n_turn]->InsertVertex(ins.p_vtx, ins.index);
 
 	// UPDATING KNAPSACK CONSTRAINTS
 	updateBudgetSlack(v_Turns);
 	v_Turns[ins.n_turn]->UpdateKnapSlack();
-
 
 	// UPDATING NEIGHBORHOOD CONSISTENCY
 	
@@ -96,6 +98,16 @@ void insert_vtxIntoTurn(Insertion & ins, vector<Turn *> & v_Turns, vector<Vertex
 			}
 		}
 	}
+}
+
+
+void PrintHowTo(){
+	cerr << "ERROR : you must at least specify the target file path" << endl
+				 << "  Use : [-t] [-i] /PATH_TO_EXE/grils PATH_TO_TEST_FILE" << endl
+				 << "		[-t] print the turns content" << endl
+				 << "		[-i] print each insertion - removal of vertex into the turns" << endl
+				 << endl;
+	return;
 }
 
 
@@ -122,7 +134,6 @@ void buildTurns(vector<Vertex *> & v_vertices_STW, vector<Turn *> & v_Turns, flo
 	vector<Insertion> v_insertions; //--- Vector of possible insertions (max size = n_turns*n_intervals*n_verticesremaining)
 
 	while (1) {
-
 
 		// for each turn
 		for (int m_turn = 0; m_turn < v_Turns.size(); m_turn++) {
@@ -250,6 +261,7 @@ void convertMTWtoSTW(vector<Vertex *> & v_vertices, vector<Vertex *> & v_vertice
 				p_vtx_v->e = i_p_tw % 2;
 			}
 
+			p_vtx_v->id_STW = v_vertices_STW.size();
 
 			v_p_vtx_Family.push_back(p_vtx_v);
 			v_vertices_STW.push_back(p_vtx_v);
@@ -278,8 +290,6 @@ void initRandSeed() {
 
 
 void initSTWVertices(vector<Vertex *> & v_vertices_STW, int n_Turns) {
-
-
 	for (auto it_p_vtx = v_vertices_STW.begin() + 2; it_p_vtx != v_vertices_STW.end(); it_p_vtx++) {
 		(*it_p_vtx)->isInserted = false;
 		for (int i = 0; i < n_Turns; i++) {
