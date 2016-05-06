@@ -13,6 +13,9 @@ file(
         sources/*
 
 )
+if(CMAKE_COMPILER_IS_GNUCXX)
+    set(CMAKE_CXX_FLAGS "-O3")        ## Optimize
+endif()
 
 #Déclaration de l'exécutable
 

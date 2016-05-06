@@ -137,7 +137,6 @@ int main(int argc, char *argv[]) { //------------------------------- START OF MA
 			cerr << "ERROR : An error occured while parsing the test file" << endl;
 			return EXIT_PARSING_ERROR;
 		}
-		
 	}
 	else {
 		cerr << "ERROR : Unable to open file" << endl;
@@ -181,7 +180,7 @@ int main(int argc, char *argv[]) { //------------------------------- START OF MA
 	// Testing turn construction
 	#ifdef TEST
 
-	vector <int> v_InsertionSequence = {189, 184, 137, 126, 34};
+	vector <int> v_InsertionSequence = {189, 184, 137, 126, 34}; // build the turn you want to test.
 	Test::BuildTurn(v_vertices_STW, v_Turns, v_InsertionSequence);
 
 	// ------------------------------------------------------------------------
